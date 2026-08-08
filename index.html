@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>吃谷团长管理工具</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;font-family:system-ui}
+body{padding:12px;max-width:1200px;margin:0 auto;background:#f7f8fa}
+.tab-bar{display:flex;gap:6px;margin-bottom:12px;flex-wrap:wrap}
+.tab{padding:8px 14px;background:#e4e7ed;border-radius:6px;cursor:pointer}
+.tab.active{background:#409eff;color:#fff}
+.panel{display:none;background:#fff;padding:16px;border-radius:8px}
+.panel.show{display:block}
+input,select,textarea{width:100%;padding:8px;margin:6px 0;border:1px solid #ddd;border-radius:4px}
+button{padding:8px 14px;background:#409eff;color:#fff;border:none;border-radius:4px;cursor:pointer;margin:4px}
+button.del{background:#f56c6c}
+table{width:100%;border-collapse:collapse;margin:10px 0}
+th,td{border:1px solid #ddd;padding:8px;text-align:center}
+img.thumb{max-width:80px;max-height:80px}
+.flex-row{display:flex;gap:8px;flex-wrap:wrap}
+</style>
+</head>
+<body>
+<div class="tab-bar">
+  <div class="tab active" data-target="panel-group">团管理</div>
+  <div class="tab" data-target="panel-item">谷子录入</div>
+  <div class="tab" data-target="panel-order">排单录入</div>
+  <div class="tab" data-target="panel-bill">肾表汇总</div>
+  <div class="tab" data-target="panel-search">CN自查</div>
+</div>
+
+<div class="panel show" id="panel-group">
+<h3>新建团</h3>
+<input placeholder="团名称" id="groupName">
+<select id="groupType">
+  <option>切煤团</option>
+  <option>国内现货团</option>
+  <option>通贩团</option>
+</select>
+<button onclick="addGroup()">添加团</button>
+<div id="groupList"></div>
+</div>
+
+<div class="panel" id="panel-item">
+<h3>录入谷子</h3>
+<select id="selGroupItem"></select>
+<input placeholder="谷子名称（柄名）" id="itemName">
+<input type="file" accept="image/*" id="itemImg">
+<input placeholder="原价" type="number" step="0.01" id="itemPrice">
+<input placeholder="调价(正负)" type="number" step="0.01" id="itemAdjust">
+<input placeholder="总开数" type="number" id="itemTotal">
+<select id="itemStatus">
+  <option>未到货</option>
+  <option>部分到货</option>
+  <option>全部到货</option>
+</select>
+<button onclick="addItem()">保存谷子</button>
+<div id="itemList"></div>
+</div>
+
+<div class="panel" id="panel-order">
+<h3>录入排单</h3>
+<select id="selGroupOrder"></select>
+<input placeholder="团员CN" id="orderCn">
+<select id="selItem"></select>
+<input placeholder="排单数量" type="number" id="orderNum">
+<select id="orderStatus">
+  <option>未到货</option>
+  <option>已到货</option>
+  <option>已签收</option>
+</select>
+<button onclick="addOrder()">新增排单</button>
+<div id="orderList"></div>
+</div>
+
+<div class="panel" id="panel-bill">
+<h3>肾表汇总</h3>
+<select id="selGroupBill"></select>
+<button onclick="renderBill()">生成肾表</button>
+<div id="billBox"></div>
+</div>
+
+<div class="panel" id="panel-search">
+<h3>CN自查</h3>
+<input placeholder="输入CN查询全部谷子" id="searchCn">
+<button onclick="searchByCn()">查询</button>
+<div id="searchResult"></div>
+</div>
+
+<script>
+// 数据初始化
+let data = JSON.parse(localStorage.getItem('guData')) || {
+  groups:[],
+  items:[],
+  orders:[]
+};
+function save(){
+  localStorage.setItem('guData',JSON.stringify(data));
+}
+// 切换标签
+document.querySelectorAll('.tab').forEach(t=>{
+  t.onclick=()=>{
+    document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));
+    document.querySelectorAll('.panel').forEach(x=>x.classList.remove('show'));
+    t.classList.add('active');
+    document.getElementById(t.dataset.target).classList.add('show');
+    refreshAllSelect();
+  }
+})
+// 团
+function addGroup(){
+  const name=document.getElementById('groupName').value.trim();
+  const type=document.getElementById('groupType').value;
+  if(!name)return alert('填写团名');
+  data.groups.push({id:Date.now(),name,type});
+  save();renderGroup();refreshAllSelect();
+  document.getElementById('groupName').value='';
+}
+function renderGroup(){
+  let html='';
+  data.groups.forEach(g=>{
+    html+=`<div>${g.name}【${g.type}】<button class="del" onclick="delGroup(${g.id})">删除</button></div>`
+  })
+  document.getElementById('groupList').innerHTML=html;
+}
+function delGroup(id){
+  data.groups=data.groups.filter(g=>g.id!==id);save();renderGroup();refreshAllSelect();
+}
+// 谷子
+function addItem(){
+  const gid=document.getElementById('selGroupItem').value;
+  const name=document.getElementById('itemName').value.trim();
+  const price=Number(document.getElementById('itemPrice').value);
+  const adj=Number(document.getElementById('itemAdjust').value);
+  const total=Number(document.getElementById('itemTotal').value);
+  const status=document.getElementById('itemStatus').value;
+  if(!gid||!name)return alert('完善信息');
+  const file=document.getElementById('itemImg').files[0];
+  if(file){
+    const reader=new FileReader();
+    reader.onload=e=>{
+      data.items.push({
+        id:Date.now(),gid,name,img:e.target.result,price,adjust:adj,total,status,
+        avg:price+adj
+      });
+      save();renderItem();refreshAllSelect();
+      clearItemForm();
+    }
+    reader.readAsDataURL(file);
+  }else{
+    data.items.push({
+      id:Date.now(),gid,name,img:'',price,adjust:adj,total,status,avg:price+adj
+    });
+    save();renderItem();refreshAllSelect();
+    clearItemForm();
+  }
+}
+function clearItemForm(){
+  document.getElementById('itemName').value='';
+  document.getElementById('itemPrice').value='';
+  document.getElementById('itemAdjust').value='';
+  document.getElementById('itemTotal').value='';
+  document.getElementById('itemImg').value='';
+}
+function renderItem(){
+  let html='<table><tr><th>团</th><th>谷子</th><th>柄图</th><th>均价</th><th>到货</th><th>操作</th></tr>';
+  data.items.forEach(it=>{
+    const g=data.groups.find(x=>x.id==it.gid);
+    html+=`<tr>
+      <td>${g?.name||'未知团'}</td>
+      <td>${it.name}</td>
+      <td>${it.img?`<img class="thumb" src="${it.img}">`:'无图'}</td>
+      <td>${it.avg.toFixed(2)}</td>
+      <td>${it.status}</td>
+      <td><button class="del" onclick="delItem(${it.id})">删除</button></td>
+    </tr>`
+  })
+  html+='</table>';
+  document.getElementById('itemList').innerHTML=html;
+}
+function delItem(id){
+  data.items=data.items.filter(x=>x.id!==id);save();renderItem();refreshAllSelect();
+}
+// 排单
+function addOrder(){
+  const gid=document.getElementById('selGroupOrder').value;
+  const cn=document.getElementById('orderCn').value.trim();
+  const iid=document.getElementById('selItem').value;
+  const num=Number(document.getElementById('orderNum').value);
+  const st=document.getElementById('orderStatus').value;
+  if(!gid||!cn||!iid||!num)return alert('完善信息');
+  const item=data.items.find(x=>x.id==iid);
+  const amount=item.avg*num;
+  data.orders.push({
+    id:Date.now(),gid,cn,iid,num,amount,status:st
+  });
+  save();renderOrder();refreshAllSelect();
+  document.getElementById('orderCn').value='';
+  document.getElementById('orderNum').value='';
+}
+function renderOrder(){
+  let html='<table><tr><th>团</th><th>CN</th><th>谷子</th><th>数量</th><th>金额</th><th>状态</th><th>操作</th></tr>';
+  data.orders.forEach(od=>{
+    const g=data.groups.find(x=>x.id==od.gid);
+    const it=data.items.find(x=>x.id==od.iid);
+    html+=`<tr>
+      <td>${g?.name||''}</td>
+      <td>${od.cn}</td>
+      <td>${it?.name||''}</td>
+      <td>${od.num}</td>
+      <td>${od.amount.toFixed(2)}</td>
+      <td>${od.status}</td>
+      <td><button class="del" onclick="delOrder(${od.id})">删除</button></td>
+    </tr>`
+  })
+  html+='</table>';
+  document.getElementById('orderList').innerHTML=html;
+}
+function delOrder(id){
+  data.orders=data.orders.filter(x=>x.id!==id);save();renderOrder();refreshAllSelect();
+}
+// 肾表
+function renderBill(){
+  const gid=document.getElementById('selGroupBill').value;
+  const list=data.orders.filter(o=>o.gid==gid);
+  const map={};
+  list.forEach(od=>{
+    if(!map[od.cn])map[od.cn]=0;
+    map[od.cn]+=od.amount;
+  })
+  let html='<table><tr><th>CN</th><th>合计金额</th></tr>';
+  for(let cn in map){
+    html+=`<tr><td>${cn}</td><td>${map[cn].toFixed(2)}</td></tr>`
+  }
+  html+='</table>';
+  document.getElementById('billBox').innerHTML=html;
+}
+// CN自查
+function searchByCn(){
+  const cn=document.getElementById('searchCn').value.trim();
+  const list=data.orders.filter(o=>o.cn===cn);
+  let html='';
+  if(list.length===0){html='<p>未找到排单</p>'}else{
+    html='<table><tr><th>团</th><th>谷子</th><th>柄图</th><th>数量</th><th>单品金额</th><th>到货状态</th></tr>';
+    list.forEach(od=>{
+      const g=data.groups.find(x=>x.id==od.gid);
+      const it=data.items.find(x=>x.id==od.iid);
+      html+=`<tr>
+        <td>${g?.name}</td>
+        <td>${it?.name}</td>
+        <td>${it?.img?`<img class="thumb" src="${it.img}">`:'无图'}</td>
+        <td>${od.num}</td>
+        <td>${od.amount.toFixed(2)}</td>
+        <td>${od.status}</td>
+      </tr>`
+    })
+    html+='</table>';
+  }
+  document.getElementById('searchResult').innerHTML=html;
+}
+// 下拉刷新
+function refreshAllSelect(){
+  let optG='';
+  data.groups.forEach(g=>optG+=`<option value="${g.id}">${g.name}</option>`);
+  document.getElementById('selGroupItem').innerHTML=optG;
+  document.getElementById('selGroupOrder').innerHTML=optG;
+  document.getElementById('selGroupBill').innerHTML=optG;
+
+  let optI='';
+  data.items.forEach(it=>optI+=`<option value="${it.id}">${it.name}</option>`);
+  document.getElementById('selItem').innerHTML=optI;
+}
+// 初始加载
+renderGroup();renderItem();renderOrder();refreshAllSelect();
+</script>
+</body>
+</html>
