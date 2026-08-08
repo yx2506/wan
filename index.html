@@ -2,284 +2,318 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
-<title>拼团自查站</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>谷圈排单自查站</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 <style>
-*{box-sizing:border-box;font-family:system-ui}
-body{max-width:1200px;margin:0 auto;padding:16px;background:#f7f8fa}
-.card{background:#fff;border-radius:8px;padding:16px;margin-bottom:12px;box-shadow:0 1px 4px #00000015}
-input,select,button{padding:8px 10px;border:1px solid #ccc;border-radius:4px;margin:4px 0}
-button{cursor:pointer;background:#4078f2;color:#fff;border:none}
-button.danger{background:#f56c6c}
-button.success{background:#67c23a}
-table{width:100%;border-collapse:collapse;margin:10px 0}
-th,td{border:1px solid #ddd;padding:8px;text-align:center}
-th{background:#f0f2f5}
-.hide{display:none}
+*{box-sizing:border-box;margin:0;padding:0;font-family:system-ui,"Microsoft Yahei",sans-serif;}
+body{background:#f6f7fa;padding:16px;max-width:1200px;margin:0 auto;color:#222;}
+header{text-align:center;margin-bottom:20px;}
+.nav{display:flex;gap:10px;flex-wrap:wrap;justify-content:center;margin-bottom:20px}
+.nav button{padding:9px 16px;border:none;border-radius:6px;background:#d4e2f8;cursor:pointer;font-size:15px;}
+.nav button.active{background:#447bdd;color:#fff;}
+.box{background:#fff;border-radius:10px;padding:22px;box-shadow:0 1px 10px #0000000d;margin-bottom:16px;}
+.panel{display:none;}
+.panel.show{display:block;}
+input,textarea,select{width:100%;padding:10px;margin:7px 0 12px;border:1px solid #dde1e9;border-radius:6px;font-size:14px;}
+button{padding:9px 14px;border:none;border-radius:6px;cursor:pointer;margin:4px;}
+.blue{background:#447bdd;color:#fff;}
+.red{background:#e75858;color:#fff;}
+.green{background:#49b872;color:#fff;}
+table{width:100%;border-collapse:collapse;margin-top:14px;}
+th,td{border:1px solid #e6e9f0;padding:10px;font-size:14px;text-align:left;}
+th{background:#f0f4fc;}
+.msg{padding:10px;border-radius:6px;margin:8px 0;}
+.success{background:#e8f7ee;color:#238c4a;}
+.error{background:#fee; color:#c83838;}
+.tip{color:#666;font-size:13px;margin:6px 0;}
 </style>
 </head>
 <body>
-<div id="app">
-  <div class="card" id="loginBox">
-    <h3>登录</h3>
-    <input type="text" id="loginName" placeholder="昵称">
-    <input type="password" id="loginPwd" placeholder="密码">
-    <button onclick="login()">登录</button>
-  </div>
+<header>
+<h2>谷圈排单自查系统</h2>
+<p>qlkzdl同款架构｜团长登录｜密钥查单｜多团期管理</p>
+</header>
 
-  <div id="mainBox" class="hide">
-    <div class="card">
-      <span>当前用户：<b id="curUser"></b>｜角色：<b id="curRole"></b></span>
-      <button onclick="logout()">退出登录</button>
-    </div>
+<div class="nav">
+  <button class="nav-btn active" data-page="guest">团员查询</button>
+  <button class="nav-btn" data-page="login">团长登录/注册</button>
+  <button class="nav-btn" data-page="admin" id="adminNav" style="display:none">团长后台</button>
+</div>
 
-    <!-- 管理员区域 -->
-    <div id="adminArea" class="hide">
-      <div class="card">
-        <h4>邮费设置（总邮费自动分摊）</h4>
-        <input type="number" step="0.01" id="totalPostage" placeholder="整单总邮费">
-        <button onclick="savePostage()">保存邮费配置</button>
-      </div>
-
-      <div class="card">
-        <h4>新增订单</h4>
-        <input type="text" id="mName" placeholder="团员昵称">
-        <input type="text" id="char" placeholder="角色">
-        <input type="text" id="item" placeholder="柄名/商品">
-        <input type="number" id="num" placeholder="数量">
-        <input type="number" step="0.01" id="price" placeholder="单品单价">
-        <button onclick="addOrder()" class="success">添加订单</button>
-        <button onclick="exportExcel()" class="success">导出全部Excel</button>
-      </div>
-    </div>
-
-    <div class="card">
-      <h4>订单列表</h4>
-      <table>
-        <thead>
-          <tr>
-            <th>团员</th>
-            <th>角色</th>
-            <th>商品</th>
-            <th>数量</th>
-            <th>单价</th>
-            <th>商品小计</th>
-            <th>分摊邮费</th>
-            <th>合计应付</th>
-            <th>状态</th>
-            <th id="opTh">操作</th>
-          </tr>
-        </thead>
-        <tbody id="tableBody"></tbody>
-      </table>
-    </div>
-
-    <div class="card">
-      <h4>团员金额汇总</h4>
-      <div id="summaryBox"></div>
-    </div>
+<!-- 团员查询页面 -->
+<div class="panel show" id="guest">
+  <div class="box">
+    <h3>团员自助查单</h3>
+    <input id="inputQueryKey" placeholder="团长提供的查询密钥">
+    <input id="inputMemberName" placeholder="你的昵称">
+    <button class="blue" onclick="searchOrder()">查询排单</button>
+    <div id="guestMsg"></div>
+    <div id="guestResult"></div>
   </div>
 </div>
 
+<!-- 登录注册 -->
+<div class="panel" id="login">
+<div class="box">
+<h3>团长账号</h3>
+<input id="loginEmail" placeholder="邮箱">
+<input id="loginPwd" type="password" placeholder="密码">
+<div>
+<button class="blue" onclick="signIn()">登录</button>
+<button class="green" onclick="signUp()">注册新账号</button>
+</div>
+<div id="loginMsg"></div>
+</div>
+</div>
+
+<!-- 团长后台 -->
+<div class="panel" id="admin">
+<div class="box">
+<h3>全局设置</h3>
+<input id="setQueryKey" placeholder="设置查询密钥（团员靠这个查你的单）">
+<button class="blue" onclick="saveKey()">保存密钥</button>
+<span class="tip">设置完成后把密钥发给团员</span>
+</div>
+
+<div class="box">
+<h3>新增排单条目</h3>
+<input id="memberName" placeholder="团员昵称">
+<input id="itemName" placeholder="谷子柄名">
+<input type="number" id="count" placeholder="数量">
+<input type="number" step="0.01" id="price" placeholder="单价">
+<select id="status">
+<option>未肾</option>
+<option>已肾</option>
+<option>跑单</option>
+</select>
+<textarea id="note" placeholder="备注"></textarea>
+<button class="blue" onclick="addItem()">添加</button>
+<div id="adminMsg"></div>
+</div>
+
+<div class="box">
+<h3>全部排单列表</h3>
+<table>
+<thead>
+<tr><th>昵称</th><th>商品</th><th>数量</th><th>单价</th><th>小计</th><th>状态</th><th>备注</th><th>操作</th></tr>
+</thead>
+<tbody id="tableBody"></tbody>
+</table>
+</div>
+
+<div style="text-align:center;margin-top:12px;">
+<button class="red" onclick="logout()">退出登录</button>
+</div>
+</div>
+
 <script>
-// ===================== 已填入你提供的Supabase信息 =====================
-const SUPABASE_URL = "https://ymrtivdluzupokxljtec.supabase.co";
-const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InltcnRpdmRsdXp1cG9reGxqdGVjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODYxOTMwOTUsImV4cCI6MjEwMTc2OTA5NX0.4gQ2ACtn61eBWAFY5SYjV71cW7assOJ0VsdWwNnPU2Y";
-const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-// =====================================================================
+// ============ 你的 Supabase 配置 ============
+const supabaseUrl = 'https://ymrtivdluzupokxljtec.supabase.co'
+const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InltcnRpdmRsdXp1cG9reGxqdGVjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODYxOTMwOTUsImV4cCI6MjEwMTc2OTA5NX0.4gQ2ACtn61eBWAFY5SYjV71cW7assOJ0VsdWwNnPU2Y'
+const supabase = window.supabase.createClient(supabaseUrl, supabaseKey)
 
-let currentUser = null;
-let postageSetting = {total:0, avg:0};
+let userId = null;
+let groupData = [];
+let queryKeyGlobal = "";
 
-// Supabase 建表SQL（复制到SQL编辑器执行）
-/*
-CREATE TABLE user_auth (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  nickname TEXT NOT NULL,
-  password TEXT NOT NULL,
-  role TEXT NOT NULL CHECK (role IN ('admin','member'))
-);
-
-CREATE TABLE orders (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  member_name TEXT NOT NULL,
-  character TEXT NOT NULL,
-  item_name TEXT NOT NULL,
-  count INT NOT NULL,
-  price DECIMAL(10,2) NOT NULL,
-  goods_sum DECIMAL(10,2) NOT NULL DEFAULT 0,
-  status TEXT DEFAULT '未肾'
-);
-
-CREATE TABLE postage_config (
-  id INT PRIMARY KEY DEFAULT 1,
-  total_postage DECIMAL(10,2) DEFAULT 0
-);
-
--- 测试账号插入示例
-INSERT INTO user_auth (nickname,password,role) VALUES ('团长','123456','admin');
-INSERT INTO user_auth (nickname,password,role) VALUES ('团员A','1111','member');
-*/
-
-async function login(){
-  const name = document.getElementById('loginName').value.trim();
-  const pwd = document.getElementById('loginPwd').value;
-  const {data} = await supabase.from('user_auth').select('*').eq('nickname',name).eq('password',pwd).single();
-  if(!data){
-    alert('账号或密码错误');
-    return;
+// 导航切换
+document.querySelectorAll('.nav-btn').forEach(btn=>{
+  btn.onclick = ()=>{
+    document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'))
+    btn.classList.add('active')
+    const page = btn.dataset.page
+    document.querySelectorAll('.panel').forEach(p=>p.classList.remove('show'))
+    document.getElementById(page).classList.add('show')
   }
-  currentUser = data;
-  renderMain();
-  loadAll();
-}
+})
 
-function logout(){
-  currentUser = null;
-  document.getElementById('loginBox').classList.remove('hide');
-  document.getElementById('mainBox').classList.add('hide');
-}
-
-function renderMain(){
-  document.getElementById('loginBox').classList.add('hide');
-  document.getElementById('mainBox').classList.remove('hide');
-  document.getElementById('curUser').innerText = currentUser.nickname;
-  document.getElementById('curRole').innerText = currentUser.role;
-  if(currentUser.role === 'admin'){
-    document.getElementById('adminArea').classList.remove('hide');
-    document.getElementById('opTh').classList.remove('hide');
-  }else{
-    document.getElementById('adminArea').classList.add('hide');
-    document.getElementById('opTh').classList.add('hide');
+// 初始化检测登录状态
+async function initSession(){
+  const {data:{session}} = await supabase.auth.getSession()
+  if(session){
+    userId = session.user.id
+    document.getElementById('adminNav').style.display = 'inline-block'
+    switchPage('admin')
+    loadLeaderData()
   }
 }
 
-async function loadPostage(){
-  const {data} = await supabase.from('postage_config').select('*').single();
-  if(data){
-    postageSetting.total = Number(data.total_postage);
-    document.getElementById('totalPostage').value = postageSetting.total;
+function switchPage(pageName){
+  document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'))
+  document.querySelector(`.nav-btn[data-page="${pageName}"]`).classList.add('active')
+  document.querySelectorAll('.panel').forEach(p=>p.classList.remove('show'))
+  document.getElementById(pageName).classList.add('show')
+}
+
+// 注册
+async function signUp(){
+  const email = document.getElementById('loginEmail').value.trim()
+  const pwd = document.getElementById('loginPwd').value.trim()
+  const {data,error} = await supabase.auth.signUp({email,password:pwd})
+  if(error) showLoginMsg(error.message,'error')
+  else {
+    showLoginMsg('注册成功，请登录','success')
+    // 自动创建一条leader_data空记录
+    if(data.user){
+      await supabase.from('leader_data').insert([{user_id:data.user.id,group_data:[],image_data:{}}])
+    }
   }
 }
 
-async function savePostage(){
-  const val = parseFloat(document.getElementById('totalPostage').value)||0;
-  await supabase.from('postage_config').upsert({id:1, total_postage:val});
-  postageSetting.total = val;
-  alert('保存成功');
-  loadAll();
-}
-
-async function loadAll(){
-  await loadPostage();
-  const {data:orders} = await supabase.from('orders').select('*');
-  let filterList = orders;
-  if(currentUser.role !== 'admin'){
-    filterList = orders.filter(o=>o.member_name === currentUser.nickname);
+// 登录
+async function signIn(){
+  const email = document.getElementById('loginEmail').value.trim()
+  const pwd = document.getElementById('loginPwd').value.trim()
+  const {data,error} = await supabase.auth.signInWithPassword({email,password:pwd})
+  if(error) showLoginMsg(error.message,'error')
+  else {
+    userId = data.user.id
+    document.getElementById('adminNav').style.display = 'inline-block'
+    switchPage('admin')
+    loadLeaderData()
   }
-
-  // 分摊邮费计算
-  const members = [...new Set(orders.map(i=>i.member_name))];
-  const avgPost = members.length > 0 ? postageSetting.total / members.length : 0;
-  postageSetting.avg = avgPost;
-
-  renderTable(filterList, avgPost);
-  renderSummary(orders, avgPost);
 }
 
-function renderTable(list, avgPost){
-  const tb = document.getElementById('tableBody');
-  tb.innerHTML = '';
-  list.forEach(row=>{
-    const goodsSum = Number(row.count) * Number(row.price);
-    const total = goodsSum + avgPost;
-    const tr = document.createElement('tr');
-    tr.innerHTML = `
-      <td>${row.member_name}</td>
-      <td>${row.character}</td>
-      <td>${row.item_name}</td>
-      <td>${row.count}</td>
-      <td>${Number(row.price).toFixed(2)}</td>
-      <td>${goodsSum.toFixed(2)}</td>
-      <td>${avgPost.toFixed(2)}</td>
-      <td><b>${total.toFixed(2)}</b></td>
-      <td>${row.status}</td>
-      <td class="${currentUser.role!=='admin'?'hide':''}">
-        <button onclick="changeStatus('${row.id}','已肾')">已肾</button>
-        <button class="danger" onclick="del('${row.id}')">删除</button>
-      </td>
-    `;
-    tb.appendChild(tr);
+// 登出
+async function logout(){
+  await supabase.auth.signOut()
+  userId = null
+  document.getElementById('adminNav').style.display = 'none'
+  switchPage('login')
+}
+
+// 加载团长数据（读取jsonb）
+async function loadLeaderData(){
+  const {data,error} = await supabase.from('leader_data').select('*').eq('user_id',userId).single()
+  if(error){
+    showAdminMsg('读取失败：'+error.message,'error')
+    return
+  }
+  groupData = data.group_data || []
+  queryKeyGlobal = data.query_key || ""
+  document.getElementById('setQueryKey').value = queryKeyGlobal
+  renderTable()
+}
+
+// 保存查询密钥
+async function saveKey(){
+  const newKey = document.getElementById('setQueryKey').value.trim()
+  const {error}=await supabase.from('leader_data').update({query_key:newKey}).eq('user_id',userId)
+  if(error) showAdminMsg('密钥保存失败：'+error.message,'error')
+  else {
+    queryKeyGlobal = newKey
+    showAdminMsg('密钥保存成功！','success')
+  }
+}
+
+// 新增排单
+async function addItem(){
+  const name = document.getElementById('memberName').value.trim()
+  const item = document.getElementById('itemName').value.trim()
+  const count = Number(document.getElementById('count').value)
+  const price = Number(document.getElementById('price').value)
+  const status = document.getElementById('status').value
+  const note = document.getElementById('note').value.trim()
+  if(!name||!item||!count||!price){
+    showAdminMsg('请填写完整信息','error')
+    return
+  }
+  const newRow = {id:Date.now(),name,item,count,price,status,note}
+  groupData.push(newRow)
+  const {error}=await supabase.from('leader_data').update({group_data:groupData}).eq('user_id',userId)
+  if(error) showAdminMsg('新增失败','error')
+  else {
+    showAdminMsg('新增成功','success')
+    document.getElementById('memberName').value=''
+    document.getElementById('itemName').value=''
+    document.getElementById('count').value=''
+    document.getElementById('price').value=''
+    document.getElementById('note').value=''
+    renderTable()
+  }
+}
+
+// 删除条目
+async function delItem(rowId){
+  if(!confirm('确定删除？')) return
+  groupData = groupData.filter(x=>x.id !== rowId)
+  const {error}=await supabase.from('leader_data').update({group_data:groupData}).eq('user_id',userId)
+  if(error) showAdminMsg('删除失败','error')
+  else renderTable()
+}
+
+function renderTable(){
+  const tbody = document.getElementById('tableBody')
+  tbody.innerHTML = ''
+  groupData.forEach(row=>{
+    const subtotal = (row.count * row.price).toFixed(2)
+    const tr = document.createElement('tr')
+    tr.innerHTML=`
+    <td>${row.name}</td>
+    <td>${row.item}</td>
+    <td>${row.count}</td>
+    <td>${row.price}</td>
+    <td>${subtotal}</td>
+    <td>${row.status}</td>
+    <td>${row.note||''}</td>
+    <td><button class="red" onclick="delItem(${row.id})">删除</button></td>
+    `
+    tbody.appendChild(tr)
   })
 }
 
-function renderSummary(allOrders, avgPost){
-  const sumMap = {};
-  allOrders.forEach(o=>{
-    const name = o.member_name;
-    if(!sumMap[name]) sumMap[name] = {goods:0};
-    sumMap[name].goods += Number(o.count)*Number(o.price);
-  })
-  let html = '';
-  for(let n in sumMap){
-    const final = sumMap[n].goods + avgPost;
-    html += `<p>${n}｜商品合计：${sumMap[n].goods.toFixed(2)}｜分摊邮费：${avgPost.toFixed(2)}｜应付总额：<b>${final.toFixed(2)}</b></p>`
+// 团员查询
+async function searchOrder(){
+  const inputKey = document.getElementById('inputQueryKey').value.trim()
+  const inputName = document.getElementById('inputMemberName').value.trim()
+  if(!inputKey||!inputName){
+    showGuestMsg('请填写密钥和昵称','error')
+    return
   }
-  document.getElementById('summaryBox').innerHTML = html;
-}
-
-async function addOrder(){
-  const mName = document.getElementById('mName').value.trim();
-  const char = document.getElementById('char').value.trim();
-  const item = document.getElementById('item').value.trim();
-  const num = parseInt(document.getElementById('num').value);
-  const price = parseFloat(document.getElementById('price').value);
-  if(!mName||!char||!item||!num||!price){
-    alert('信息填写完整');
-    return;
+  const {data,error} = await supabase.from('leader_data').select('group_data,query_key').eq('query_key',inputKey).single()
+  if(error){
+    showGuestMsg('密钥错误或不存在该团长','error')
+    return
   }
-  const goodsSum = num * price;
-  await supabase.from('orders').insert([{
-    member_name:mName,
-    character:char,
-    item_name:item,
-    count:num,
-    price:price,
-    goods_sum:goodsSum,
-    status:'未肾'
-  }])
-  alert('新增成功');
-  loadAll();
-}
-
-async function changeStatus(id,st){
-  await supabase.from('orders').update({status:st}).eq('id',id);
-  loadAll();
-}
-
-async function del(id){
-  if(!confirm('确认删除？'))return;
-  await supabase.from('orders').delete().eq('id',id);
-  loadAll();
-}
-
-// 导出Excel功能
-function exportExcel(){
-  const wb = XLSX.utils.book_new();
-  const table = document.getElementById('tableBody');
-  const rows = [['团员','角色','商品','数量','单价','商品小计','分摊邮费','合计应付','状态']];
-  Array.from(table.children).forEach(tr=>{
-    const arr = [];
-    Array.from(tr.cells).forEach((td,i)=>{
-      if(i<9) arr.push(td.innerText);
-    })
-    rows.push(arr);
+  const allList = data.group_data || []
+  const myList = allList.filter(x=>x.name.includes(inputName))
+  const box = document.getElementById('guestResult')
+  if(myList.length===0){
+    box.innerHTML = '<p>未找到你的排单</p>'
+    return
+  }
+  let html = `<table><tr><th>谷子</th><th>数量</th><th>单价</th><th>小计</th><th>状态</th><th>备注</th></tr>`
+  let total = 0
+  myList.forEach(r=>{
+    const sub = r.count * r.price
+    total += sub
+    html += `<tr>
+    <td>${r.item}</td><td>${r.count}</td><td>${r.price}</td><td>${sub.toFixed(2)}</td><td>${r.status}</td><td>${r.note||''}</td>
+    </tr>`
   })
-  const ws = XLSX.utils.aoa_to_sheet(rows);
-  XLSX.utils.book_append_sheet(wb,ws,"拼团订单表");
-  XLSX.writeFile(wb,"谷圈拼团订单.xlsx");
+  html += `</table><p style="font-weight:bold;margin-top:10px;">合计：${total.toFixed(2)}</p>`
+  box.innerHTML = html
 }
+
+// 消息提示
+function showAdminMsg(txt,type=''){
+  const dom = document.getElementById('adminMsg')
+  dom.innerHTML = `<div class="msg ${type}">${txt}</div>`
+  setTimeout(()=>dom.innerHTML='',3000)
+}
+function showLoginMsg(txt,type=''){
+  const dom = document.getElementById('loginMsg')
+  dom.innerHTML = `<div class="msg ${type}">${txt}</div>`
+  setTimeout(()=>dom.innerHTML='',3000)
+}
+function showGuestMsg(txt,type=''){
+  const dom = document.getElementById('guestMsg')
+  dom.innerHTML = `<div class="msg ${type}">${txt}</div>`
+  setTimeout(()=>dom.innerHTML='',3000)
+}
+
+initSession()
 </script>
 </body>
 </html>
