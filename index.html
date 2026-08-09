@@ -132,7 +132,7 @@
                     <button onclick="doBuyerSearch()" class="w-full bg-blue-500 text-white font-bold py-2 rounded shadow hover:bg-blue-600 transition mt-2">立即查询</button>
                 </div>
                 <div id="buyerResultArea" class="hidden border-t pt-6">
-                    <!-- 新增：团期筛选下拉框 -->
+                    <!-- 新增：IP筛选下拉框 -->
                     <div class="mb-4 flex items-center gap-2 bg-gray-50 p-2 rounded border border-gray-200">
                         <label class="text-sm font-bold text-gray-700 whitespace-nowrap">📺 筛选IP:</label>
                         <select id="buyerBatchFilter" onchange="renderBuyerSearchPage(0)" class="flex-1 border border-gray-300 rounded px-2 py-1.5 text-sm focus:border-blue-500 outline-none">
@@ -150,7 +150,7 @@
         <button onclick="showScreen('portal-screen')" class="text-gray-400 mb-4 hover:text-gray-600 block">← 返回首页</button>
         <div class="bg-white p-6 rounded-lg shadow-sm border border-yellow-200 w-full">
             <h2 class="text-xl font-bold text-yellow-700 mb-1 text-center">💰 交肾 (付款) 中心</h2>
-            <p class="text-center text-gray-400 text-xs mb-6">仅显示未交肾的商品，按团期合并付款</p>
+            <p class="text-center text-gray-400 text-xs mb-6">仅显示未交肾的商品，按IP合并付款</p>
             <div class="space-y-4 mb-6">
                 <input type="text" id="payKeyInput" placeholder="团长查询密钥" class="w-full border border-gray-300 rounded px-3 py-2 focus:border-yellow-500">
                 <input type="text" id="payCnInput" placeholder="你的严格完整 CN" class="w-full border border-gray-300 rounded px-3 py-2 focus:border-yellow-500">
@@ -373,6 +373,7 @@
                     <h2 class="text-base md:text-lg font-bold mb-4 border-b pb-2 text-gray-800">快捷手动录入</h2>
                     <form id="itemForm" class="grid grid-cols-1 md:grid-cols-5 gap-3 md:gap-4">
                         <div class="col-span-1 md:col-span-1"><label class="block text-sm text-gray-600 mb-1">IP</label><input type="text" id="inBatch" list="batchOptions" placeholder="输入新IP" required class="w-full border border-gray-300 rounded px-3 py-2 text-sm"><datalist id="batchOptions"></datalist></div>
+                        <div class="col-span-1 md:col-span-1"><label class="block text-sm text-gray-600 mb-1">柄名</label><input type="text" id="inBatch" list="batchOptions" placeholder="输入新柄名" required class="w-full border border-gray-300 rounded px-3 py-2 text-sm"><datalist id="batchOptions"></datalist></div>
                         <div class="col-span-1 md:col-span-1"><label class="block text-sm text-gray-600 mb-1">商品种类</label><input type="text" id="inCategory" required class="w-full border border-gray-300 rounded px-3 py-2 text-sm"></div>
                         <div class="col-span-1 md:col-span-1"><label class="block text-sm text-gray-600 mb-1">角色款式</label><input type="text" id="inCharacter" required class="w-full border border-gray-300 rounded px-3 py-2 text-sm"></div>
                         <div class="col-span-1 md:col-span-1"><label class="block text-sm text-gray-600 mb-1">单价 (元)</label><input type="number" step="0.01" id="inPrice" required class="w-full border border-gray-300 rounded px-3 py-2 text-sm"></div>
