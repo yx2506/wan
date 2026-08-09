@@ -132,9 +132,9 @@
                 <div id="buyerResultArea" class="hidden border-t pt-6">
                     <!-- 新增：团期筛选下拉框 -->
                     <div class="mb-4 flex items-center gap-2 bg-gray-50 p-2 rounded border border-gray-200">
-                        <label class="text-sm font-bold text-gray-700 whitespace-nowrap">📺 筛选团期:</label>
+                        <label class="text-sm font-bold text-gray-700 whitespace-nowrap">📺 筛选IP:</label>
                         <select id="buyerBatchFilter" onchange="renderBuyerSearchPage(0)" class="flex-1 border border-gray-300 rounded px-2 py-1.5 text-sm focus:border-blue-500 outline-none">
-                            <option value="all">全部团期</option>
+                            <option value="all">全部IP</option>
                         </select>
                     </div>
                     <div id="buyerSummary" class="bg-blue-50 text-blue-800 p-3 rounded text-sm mb-4"></div>
@@ -160,7 +160,7 @@
             </div>
             <div id="payResultArea" class="hidden border-t border-gray-200 pt-6">
                 <div class="flex justify-between items-center mb-3">
-                    <h3 class="font-bold text-gray-700 border-l-4 border-blue-500 pl-2">🛒 待交肾商品 (按团期)</h3>
+                    <h3 class="font-bold text-gray-700 border-l-4 border-blue-500 pl-2">🛒 待交肾商品 (按IP)</h3>
                 </div>
                 <div id="payItemsList" class="space-y-4 mb-4 select-none"></div>
             </div>
@@ -267,7 +267,7 @@
             </div>
             <!-- Step 1: 勾选 -->
             <div id="shipExportStep1" class="p-4 overflow-y-auto flex-1 text-sm">
-                <p class="text-gray-500 text-xs mb-3">请勾选需要导出的内容。勾选“团期”则只导出团期名；展开并勾选“明细”则导出具体谷子。</p>
+                <p class="text-gray-500 text-xs mb-3">请勾选需要导出的内容。勾选“IP”则只导出IP名；展开并勾选“明细”则导出具体谷子。</p>
                 <div id="shipExportTree" class="space-y-3"></div>
             </div>
             <!-- Step 2: 预览与排序 -->
@@ -370,7 +370,7 @@
                 <div class="bg-white p-4 md:p-6 rounded shadow-sm border border-gray-200">
                     <h2 class="text-base md:text-lg font-bold mb-4 border-b pb-2 text-gray-800">快捷手动录入</h2>
                     <form id="itemForm" class="grid grid-cols-1 md:grid-cols-5 gap-3 md:gap-4">
-                        <div class="col-span-1 md:col-span-1"><label class="block text-sm text-gray-600 mb-1">团期</label><input type="text" id="inBatch" list="batchOptions" placeholder="输入新团期" required class="w-full border border-gray-300 rounded px-3 py-2 text-sm"><datalist id="batchOptions"></datalist></div>
+                        <div class="col-span-1 md:col-span-1"><label class="block text-sm text-gray-600 mb-1">IP</label><input type="text" id="inBatch" list="batchOptions" placeholder="输入新IP" required class="w-full border border-gray-300 rounded px-3 py-2 text-sm"><datalist id="batchOptions"></datalist></div>
                         <div class="col-span-1 md:col-span-1"><label class="block text-sm text-gray-600 mb-1">商品种类</label><input type="text" id="inCategory" required class="w-full border border-gray-300 rounded px-3 py-2 text-sm"></div>
                         <div class="col-span-1 md:col-span-1"><label class="block text-sm text-gray-600 mb-1">角色款式</label><input type="text" id="inCharacter" required class="w-full border border-gray-300 rounded px-3 py-2 text-sm"></div>
                         <div class="col-span-1 md:col-span-1"><label class="block text-sm text-gray-600 mb-1">单价 (元)</label><input type="number" step="0.01" id="inPrice" required class="w-full border border-gray-300 rounded px-3 py-2 text-sm"></div>
@@ -395,7 +395,7 @@
                 <div class="bg-white p-4 md:p-6 rounded shadow-sm border border-gray-200">
                     <div class="flex flex-col md:flex-row md:items-center gap-3 mb-4 border-b pb-4">
     <div class="flex items-center">
-        <label class="text-sm text-gray-600 mr-2 whitespace-nowrap">选择团期:</label>
+        <label class="text-sm text-gray-600 mr-2 whitespace-nowrap">选择IP:</label>
         <select id="imageBatchSelect" onchange="renderImageManager()" class="flex-1 md:flex-none border border-gray-300 rounded px-2 py-1 text-sm min-w-[150px]"></select>
     </div>
     <div class="flex gap-2 md:ml-auto">
@@ -413,7 +413,7 @@
                 <div class="flex-1 bg-white border border-gray-200 rounded shadow-sm flex flex-col overflow-hidden">
                     <div class="p-2 md:p-3 border-b bg-gray-50 flex flex-col lg:flex-row gap-2">
                         <div class="flex items-center gap-2">
-                            <span class="text-gray-700 font-bold text-sm whitespace-nowrap" id="manageTitle">请选择团期</span>
+                            <span class="text-gray-700 font-bold text-sm whitespace-nowrap" id="manageTitle">请选择IP</span>
                         </div>
                         <div class="flex-1 min-w-0">
                             <input type="text" id="manageSearchInput" oninput="handleSearch()" placeholder="🔍 搜索买家CN、商品..." class="w-full border border-gray-300 rounded-full px-3 py-1.5 text-sm">
@@ -470,11 +470,11 @@
                     </div>
                     
                     <div class="bg-yellow-50 border border-yellow-200 p-4 rounded mb-6 shadow-sm">
-                        <h3 class="font-bold text-yellow-800 mb-2">💸 设置团期收款码 (肾码)</h3>
-                        <p class="text-xs text-gray-600 mb-3">为不同团期单独设置收款码。如果不设置，将使用下方的【默认收款码】。</p>
+                        <h3 class="font-bold text-yellow-800 mb-2">💸 设置IP收款码 (肾码)</h3>
+                        <p class="text-xs text-gray-600 mb-3">为不同IP单独设置收款码。如果不设置，将使用下方的【默认收款码】。</p>
                         <div class="flex flex-col sm:flex-row gap-2 mb-4">
                             <select id="payAdminBatchSelect" onchange="updatePayAdminCodeDisplay()" class="border border-yellow-300 bg-white rounded px-2 py-1.5 text-sm sm:w-1/3"></select>
-                            <input type="text" id="payAdminCodeInput" placeholder="粘贴此团期的专用收款码直链图片地址" class="border border-yellow-300 rounded px-2 py-1.5 text-sm flex-1">
+                            <input type="text" id="payAdminCodeInput" placeholder="粘贴此IP的专用收款码直链图片地址" class="border border-yellow-300 rounded px-2 py-1.5 text-sm flex-1">
                             <button onclick="setBatchPayCode()" class="bg-yellow-600 text-white px-4 py-1.5 rounded text-sm font-bold hover:bg-yellow-700 transition shadow">保存该团专用码</button>
                         </div>
                         
@@ -501,8 +501,8 @@
                     
                     <!-- 🏠 修改：囤货地设置工具 -->
                     <div class="bg-green-50 border border-green-200 p-4 rounded mb-6 shadow-sm">
-                        <h3 class="font-bold text-green-800 mb-2">🏠 设置或调整团期【囤货地】</h3>
-                        <p class="text-xs text-gray-600 mb-3">将不同团期分配到对应的仓库/发货地。只有同一囤货地的谷子，团员才能合并打包排发。</p>
+                        <h3 class="font-bold text-green-800 mb-2">🏠 设置或调整IP【囤货地】</h3>
+                        <p class="text-xs text-gray-600 mb-3">将不同IP分配到对应的仓库/发货地。只有同一囤货地的谷子，团员才能合并打包排发。</p>
                         
                         <div class="flex flex-col sm:flex-row gap-2 items-center mb-2">
                             <select id="shipAdminBatchSelect" onchange="updateCurrentLocationDisplay()" class="border border-green-300 bg-white rounded px-2 py-1.5 text-sm sm:w-1/3 flex-1"></select>
@@ -594,9 +594,9 @@
 <div id="reuseImageModal" class="hidden fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50 p-4">
     <div class="bg-white rounded-lg p-5 w-full max-w-sm shadow-xl">
         <h3 class="text-lg font-bold mb-4 text-gray-800">♻️ 复用历史柄图</h3>
-        <p class="text-xs text-gray-500 mb-4 bg-gray-50 p-2 rounded">系统会自动从选中的【历史团期】中，寻找与当前团期<strong class="text-blue-500">同分类、同角色名</strong>的柄图并复制过来。</p>
+        <p class="text-xs text-gray-500 mb-4 bg-gray-50 p-2 rounded">系统会自动从选中的【历史团期】中，寻找与当前IP<strong class="text-blue-500">同分类、同角色名</strong>的柄图并复制过来。</p>
         <div class="mb-4">
-            <label class="block text-sm mb-1 font-bold">请选择要复制的【源团期】：</label>
+            <label class="block text-sm mb-1 font-bold">请选择要复制的【源IP】：</label>
             <select id="reuseSourceBatch" class="w-full border rounded p-2 text-sm"></select>
         </div>
         <div class="flex justify-end gap-3">
